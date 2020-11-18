@@ -71,7 +71,7 @@ PC_SRC = $(PC_NAME).in
 
 ifeq ($(KERNEL_NAME), Linux)
 	LIB_EXT := so.$(ABI_VERSION)
-	LIB_CFLAGS := -shared -fPIC -fvisibility=hidden -DA2_VISCTL=1
+	LIB_CFLAGS := -shared -fPIC -fvisibility=hidden
 	SO_LDFLAGS := -Wl,-soname,lib$(LIB_NAME).$(LIB_EXT)
 	LINKED_LIB_EXT := so
 	PC_EXTRA_LIBS ?= -lrt -ldl
