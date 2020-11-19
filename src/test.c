@@ -20,12 +20,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <assert.h>
 
 #include "argon2.h"
 
 #define OUT_LEN 32
 #define ENCODED_LEN 108
+
+#define argon2_assert(V) do { \
+        if (!(V)) abort(); \
+    } while (0)
 
 /* Test harness will assert:
  * argon2_hash() returns ARGON2_OK
@@ -46,20 +49,20 @@ void hashtest(uint32_t version, uint32_t t, uint32_t m, uint32_t p, char *pwd,
 
     ret = argon2_hash(t, 1 << m, p, pwd, strlen(pwd), salt, strlen(salt), out,
                       OUT_LEN, encoded, ENCODED_LEN, type, version);
-    assert(ret == ARGON2_OK);
+    argon2_assert(ret == ARGON2_OK);
 
     for (i = 0; i < OUT_LEN; ++i)
         sprintf((char *)(hex_out + i * 2), "%02x", out[i]);
-    assert(memcmp(hex_out, hexref, OUT_LEN * 2) == 0);
+    argon2_assert(memcmp(hex_out, hexref, OUT_LEN * 2) == 0);
 
     if (ARGON2_VERSION_NUMBER == version) {
-        assert(memcmp(encoded, mcfref, strlen(mcfref)) == 0);
+        argon2_assert(memcmp(encoded, mcfref, strlen(mcfref)) == 0);
     }
 
     ret = argon2_verify(encoded, pwd, strlen(pwd), type);
-    assert(ret == ARGON2_OK);
+    argon2_assert(ret == ARGON2_OK);
     ret = argon2_verify(mcfref, pwd, strlen(pwd), type);
-    assert(ret == ARGON2_OK);
+    argon2_assert(ret == ARGON2_OK);
 
     printf("PASS\n");
 }
@@ -119,32 +122,32 @@ int main() {
     ret = argon2_verify("$argon2i$m=65536,t=2,p=1c29tZXNhbHQ"
                         "$9sTbSlTio3Biev89thdrlKKiCaYsjjYVJxGAL3swxpQ",
                         "password", strlen("password"), Argon2_i);
-    assert(ret == ARGON2_DECODING_FAIL);
+    argon2_assert(ret == ARGON2_DECODING_FAIL);
     printf("Recognise an invalid encoding: PASS\n");
 
     /* Handle an invalid encoding correctly (it is missing a $) */
     ret = argon2_verify("$argon2i$m=65536,t=2,p=1$c29tZXNhbHQ"
                         "9sTbSlTio3Biev89thdrlKKiCaYsjjYVJxGAL3swxpQ",
                         "password", strlen("password"), Argon2_i);
-    assert(ret == ARGON2_DECODING_FAIL);
+    argon2_assert(ret == ARGON2_DECODING_FAIL);
     printf("Recognise an invalid encoding: PASS\n");
 
     /* Handle an invalid encoding correctly (salt is too short) */
     ret = argon2_verify("$argon2i$m=65536,t=2,p=1$"
                         "$9sTbSlTio3Biev89thdrlKKiCaYsjjYVJxGAL3swxpQ",
                         "password", strlen("password"), Argon2_i);
-    assert(ret == ARGON2_SALT_TOO_SHORT);
+    argon2_assert(ret == ARGON2_SALT_TOO_SHORT);
     printf("Recognise an invalid salt in encoding: PASS\n");
 
     /* Handle an mismatching hash (the encoded password is "passwore") */
     ret = argon2_verify("$argon2i$m=65536,t=2,p=1$c29tZXNhbHQ"
                         "$b2G3seW+uPzerwQQC+/E1K50CLLO7YXy0JRcaTuswRo",
                         "password", strlen("password"), Argon2_i);
-    assert(ret == ARGON2_VERIFY_MISMATCH);
+    argon2_assert(ret == ARGON2_VERIFY_MISMATCH);
     printf("Verify with mismatched password: PASS\n");
 
     msg = argon2_error_message(ARGON2_DECODING_FAIL);
-    assert(strcmp(msg, "Decoding failed") == 0);
+    argon2_assert(strcmp(msg, "Decoding failed") == 0);
     printf("Decode an error message: PASS\n");
 
     printf("\n");
@@ -199,32 +202,32 @@ int main() {
     ret = argon2_verify("$argon2i$v=19$m=65536,t=2,p=1c29tZXNhbHQ"
                         "$wWKIMhR9lyDFvRz9YTZweHKfbftvj+qf+YFY4NeBbtA",
                         "password", strlen("password"), Argon2_i);
-    assert(ret == ARGON2_DECODING_FAIL);
+    argon2_assert(ret == ARGON2_DECODING_FAIL);
     printf("Recognise an invalid encoding: PASS\n");
 
     /* Handle an invalid encoding correctly (it is missing a $) */
     ret = argon2_verify("$argon2i$v=19$m=65536,t=2,p=1$c29tZXNhbHQ"
                         "wWKIMhR9lyDFvRz9YTZweHKfbftvj+qf+YFY4NeBbtA",
                         "password", strlen("password"), Argon2_i);
-    assert(ret == ARGON2_DECODING_FAIL);
+    argon2_assert(ret == ARGON2_DECODING_FAIL);
     printf("Recognise an invalid encoding: PASS\n");
 
     /* Handle an invalid encoding correctly (salt is too short) */
     ret = argon2_verify("$argon2i$v=19$m=65536,t=2,p=1$"
                         "$9sTbSlTio3Biev89thdrlKKiCaYsjjYVJxGAL3swxpQ",
                         "password", strlen("password"), Argon2_i);
-    assert(ret == ARGON2_SALT_TOO_SHORT);
+    argon2_assert(ret == ARGON2_SALT_TOO_SHORT);
     printf("Recognise an invalid salt in encoding: PASS\n");
 
     /* Handle an mismatching hash (the encoded password is "passwore") */
     ret = argon2_verify("$argon2i$v=19$m=65536,t=2,p=1$c29tZXNhbHQ"
                         "$8iIuixkI73Js3G1uMbezQXD0b8LG4SXGsOwoQkdAQIM",
                         "password", strlen("password"), Argon2_i);
-    assert(ret == ARGON2_VERIFY_MISMATCH);
+    argon2_assert(ret == ARGON2_VERIFY_MISMATCH);
     printf("Verify with mismatched password: PASS\n");
 
     msg = argon2_error_message(ARGON2_DECODING_FAIL);
-    assert(strcmp(msg, "Decoding failed") == 0);
+    argon2_assert(strcmp(msg, "Decoding failed") == 0);
     printf("Decode an error message: PASS\n\n");
 
     printf("Test Argon2id version number: %02x\n", version);
@@ -271,18 +274,18 @@ int main() {
     ret = argon2_hash(2, 1, 1, "password", strlen("password"),
                       "diffsalt", strlen("diffsalt"),
                       out, OUT_LEN, NULL, 0, Argon2_id, version);
-    assert(ret == ARGON2_MEMORY_TOO_LITTLE);
+    argon2_assert(ret == ARGON2_MEMORY_TOO_LITTLE);
     printf("Fail on invalid memory: PASS\n");
 
     ret = argon2_hash(2, 1 << 12, 1, NULL, strlen("password"),
                       "diffsalt", strlen("diffsalt"),
                       out, OUT_LEN, NULL, 0, Argon2_id, version);
-    assert(ret == ARGON2_PWD_PTR_MISMATCH);
+    argon2_assert(ret == ARGON2_PWD_PTR_MISMATCH);
     printf("Fail on invalid null pointer: PASS\n");
 
     ret = argon2_hash(2, 1 << 12, 1, "password", strlen("password"), "s", 1,
                       out, OUT_LEN, NULL, 0, Argon2_id, version);
-    assert(ret == ARGON2_SALT_TOO_SHORT);
+    argon2_assert(ret == ARGON2_SALT_TOO_SHORT);
     printf("Fail on salt too short: PASS\n");
 
     return 0;
