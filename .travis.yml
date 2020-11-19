@@ -1,4 +1,5 @@
 language: c
+dist: focal
 
 compiler:
   - clang
@@ -19,7 +20,14 @@ matrix:
       os: linux
       sudo: true
 
-script: make && make testci
+script:
+  - mkdir build && cd build
+  - cmake .. -DARGON2_COVERAGE=ON -DARGON2_OPTIMIZATIONS=OFF
+  - cmake --build . --verbose
+  - ctest . -VV
+  - cmake .. -DARGON2_COVERAGE=ON -DARGON2_OPTIMIZATIONS=ON
+  - cmake --build . --verbose
+  - ctest . -VV
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)

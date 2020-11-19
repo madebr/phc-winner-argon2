@@ -14,12 +14,11 @@ environment:
 matrix:
   fast_finish: false
 
-build:
-  parallel: true
-  project: Argon2.sln
-  verbosity: minimal
-
-test_script:
-  - ps: kats\test.ps1
-  - ps: if ("Release" -eq $env:configuration) { vs2015\build\Argon2OptTestCI.exe }
-  - ps: if ("Release" -eq $env:configuration) { vs2015\build\Argon2RefTestCI.exe }
+build_script:
+  - mkdir build && cd build
+  - cmake .. -DARGON2_OPTIMIZATIONS=OFF
+  - cmake --build . --config %CONFIGURATION%
+  - ctest . -C %CONFIGURATION% -VV
+  - cmake .. -DARGON2_OPTIMIZATIONS=ON
+  - cmake --build . --config %CONFIGURATION%
+  - ctest . -C %CONFIGURATION% -VV

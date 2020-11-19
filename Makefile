@@ -15,10 +15,14 @@
 # software. If not, they may be obtained at the above URLs.
 #
 
+HOMEPAGE := https://github.com/P-H-C/phc-winner-argon2/
+
 RUN = argon2
 BENCH = bench
 GENKAT = genkat
 ARGON2_VERSION ?= ZERO
+
+PYTHON ?= python3
 
 # installation parameters for staging area and final installation path
 # Note; if Linux and not Debian/Ubuntu version also add lib override to make command-line
@@ -37,7 +41,7 @@ SRC_BENCH = src/bench.c
 SRC_GENKAT = src/genkat.c
 OBJ = $(SRC:.c=.o)
 
-CFLAGS += -std=c89 -O3 -Wall -g -Iinclude -Isrc
+CFLAGS += -DA2_BUILDING -std=c89 -O3 -Wall -g -Iinclude -Isrc
 
 ifeq ($(NO_THREADS), 1)
 CFLAGS += -DARGON2_NO_THREADS
@@ -74,7 +78,7 @@ ifeq ($(KERNEL_NAME), Linux)
 	LIB_CFLAGS := -shared -fPIC -fvisibility=hidden
 	SO_LDFLAGS := -Wl,-soname,lib$(LIB_NAME).$(LIB_EXT)
 	LINKED_LIB_EXT := so
-	PC_EXTRA_LIBS ?= -lrt -ldl
+	PC_EXTRA_LIBS ?= -lrt -ldl -pthread
 endif
 ifeq ($(KERNEL_NAME), $(filter $(KERNEL_NAME),DragonFly FreeBSD NetBSD OpenBSD))
 	LIB_EXT := so
@@ -199,11 +203,12 @@ clean:
 
 # all substitutions to pc template
 SED_COMMANDS  = /^\#\#.*$$/d;
-SED_COMMANDS += s\#@PREFIX@\#$(PREFIX)\#g;
-SED_COMMANDS += s\#@EXTRA_LIBS@\#$(PC_EXTRA_LIBS)\#g;
-SED_COMMANDS += s\#@UPSTREAM_VER@\#$(ARGON2_VERSION)\#g;
-SED_COMMANDS += s\#@HOST_MULTIARCH@\#$(LIBRARY_REL)\#g;
-SED_COMMANDS += s\#@INCLUDE@\#$(INCLUDE_REL)\#g;
+SED_COMMANDS += s\#@CMAKE_INSTALL_PREFIX@\#$(PREFIX)\#g;
+SED_COMMANDS += s\#@CMAKE_INSTALL_FULL_LIBDIR@\#$${prefix}/${LIBRARY_REL}\#g;
+SED_COMMANDS += s\#@CMAKE_INSTALL_FULL_INCLUDEDIR@\#$${prefix}/${INCLUDE_REL}\#g;
+SED_COMMANDS += s\#@argon2_VERSION@\#$(ARGON2_VERSION)\#g;
+SED_COMMANDS += s\#@ARGON2_PKGCONFIG_LIBS@\#$(PC_EXTRA_LIBS)\#g;
+SED_COMMANDS += s\#@argon2_HOMEPAGE_URL@\#$(HOMEPAGE)\#g;
 
 # substitute PREFIX and PC_EXTRA_LIBS into pkgconfig pc file
 $(PC_NAME): $(PC_SRC)
@@ -216,15 +221,15 @@ dist:
 		tar -c --exclude='.??*' -z -f $(DIST)-`date "+%Y%m%d"`.tgz $(DIST)/*
 
 .PHONY: test
-test:           $(SRC) src/test.c
-		$(CC) $(CFLAGS)  -Wextra -Wno-type-limits $^ -o testcase
-		@sh kats/test.sh
+test:           $(SRC) src/test.c $(GENKAT)
+		$(CC) $(CFLAGS)  -Wextra -Wno-type-limits $(SRC) src/test.c -o testcase
+		$(PYTHON) kats/test.py ./$(GENKAT)
 		./testcase
 
 .PHONY: testci
-testci:         $(SRC) src/test.c
-		$(CC) $(CI_CFLAGS) $^ -o testcase
-		@sh kats/test.sh
+testci:         $(SRC) src/test.c $(GENKAT)
+		$(CC) $(CI_CFLAGS) $(SRC) src/test.c -o testcase
+		$(PYTHON) kats/test.py ./$(GENKAT)
 		./testcase
 
 

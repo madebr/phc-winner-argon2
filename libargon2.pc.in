@@ -5,14 +5,14 @@
 ## - replace @PREFIX@ with install path, e.g. '/usr', '/usr/local', '/usr/pkg'
 ## - replace @INCLUDE@ with incluse path, e.g. 'include' or 'include/argon2'
 
-prefix=@PREFIX@
+prefix=@CMAKE_INSTALL_PREFIX@
 exec_prefix=${prefix}
-libdir=${prefix}/@HOST_MULTIARCH@
-includedir=${prefix}/@INCLUDE@
+libdir=@CMAKE_INSTALL_FULL_LIBDIR@
+includedir=@CMAKE_INSTALL_FULL_INCLUDEDIR@
 
 Name: libargon2
 Description: Development libraries for libargon2
-Version: @UPSTREAM_VER@
-Libs: -L${libdir} -largon2 @EXTRA_LIBS@
+Version: @argon2_VERSION@
+Libs: -L${libdir} -largon2 @ARGON2_PKGCONFIG_LIBS@
 Cflags: -I${includedir}
-URL: https://github.com/P-H-C/phc-winner-argon2
+URL: @argon2_HOMEPAGE_URL@
